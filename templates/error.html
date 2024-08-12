@@ -1,0 +1,50 @@
+from flask import Flask, render_template, request, redirect, url_for
+import pickle
+import numpy as np
+import pandas as pd
+
+app = Flask(__name__)
+
+try:
+    # Load the scaler and model
+    with open('model/standarScaler.pkl', 'rb') as scaler_file:
+        scaler = pickle.load(scaler_file)
+
+    with open('model/modelForPrediction.pkl', 'rb') as model_file:
+        model = pickle.load(model_file)
+except FileNotFoundError as e:
+    print(f"Error: {e}")
+    exit(1)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/classify', methods=['POST'])
+def classify():
+    try:
+        # Extract all required features from the form
+        feature1 = float(request.form.get('feature1', 0))
+        feature2 = float(request.form.get('feature2', 0))
+        # Add more features as needed
+
+        # Combine features into a numpy array
+        features = np.array([[feature1, feature2, ..., feature22]])
+
+        # Scale the features using the loaded StandardScaler
+        scaled_features = scaler.transform(features)
+
+        # Predict the class using the loaded model
+        predicted_class = model.predict(scaled_features)[0]
+
+        # Convert the predicted class to a human-readable format
+        class_names = ['Edible', 'Poisonous']
+        result = class_names[predicted_class]
+
+        return render_template('result.html', prediction=result)
+    except Exception as e:
+        print(f"Error: {e}")
+        return render_template('error.html')
+
+if __name__ == '__main__':
+    app.run(debug=False)
